@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>문답식 기획 시뮬레이터 — 웃소 제작팀</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F7F6F3;
+  --surface:#FFFFFF;
+  --border:#E4E2DC;
+  --border-hover:#C8C5BC;
+  --text:#1A1916;
+  --text-sub:#7A7870;
+  --text-hint:#B0AEA8;
+  --accent:#2A2A2A;
+  --orange:#D4500A;
+  --orange-bg:#FDF1EB;
+  --orange-border:#F5C4A8;
+  --green:#1A6640;
+  --green-bg:#EDF7F1;
+  --green-border:#A8D9BC;
+  --red:#B83232;
+  --red-bg:#FDF0F0;
+  --red-border:#F5BABA;
+  --blue:#1A4A8A;
+  --blue-bg:#EEF3FB;
+  --blue-border:#A8C0E8;
+  --radius:8px;
+  --radius-lg:12px;
+}
+body{background:var(--bg);font-family:'Noto Sans KR',sans-serif;font-size:14px;color:var(--text);min-height:100vh;padding:2rem 1rem}
+.wrap{max-width:640px;margin:0 auto}
+
+/* 헤더 */
+.header{margin-bottom:2rem}
+.header-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.5rem}
+.logo{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text-hint);margin-bottom:.5rem}
+.main-title{font-size:22px;font-weight:600;color:var(--text);letter-spacing:-.02em;line-height:1.2}
+.main-sub{font-size:13px;color:var(--text-sub);margin-top:.25rem}
+.progress-wrap{margin-top:1.25rem}
+.progress-label{display:flex;justify-content:space-between;font-size:11px;color:var(--text-hint);margin-bottom:.4rem}
+.progress-bar{height:2px;background:var(--border);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:var(--text);border-radius:2px;transition:width .4s ease}
+
+/* 메타 입력 */
+.meta-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1.25rem;display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.meta-field label{display:block;font-size:11px;font-weight:500;color:var(--text-sub);margin-bottom:.35rem;letter-spacing:.04em}
+.meta-field input{width:100%;font-size:13px;padding:7px 10px;border-radius:var(--radius);border:.5px solid var(--border);background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;transition:border-color .15s}
+.meta-field input:focus{outline:none;border-color:var(--border-hover);background:var(--surface)}
+.meta-field.full{grid-column:1/-1}
+
+/* 탭 */
+.tabs{display:flex;gap:4px;margin-bottom:1rem;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex-shrink:0;padding:5px 11px;border-radius:20px;border:.5px solid var(--border);font-size:11px;font-weight:500;cursor:pointer;background:var(--surface);color:var(--text-sub);transition:all .15s;white-space:nowrap}
+.tab:hover{border-color:var(--border-hover);color:var(--text)}
+.tab.active{background:var(--text);border-color:var(--text);color:#fff}
+.tab.done{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+
+/* 패널 */
+.panel{display:none}
+.panel.active{display:block}
+.panel-card{background:var(--surface);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1rem}
+.panel-head{display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:.5px solid var(--border)}
+.phase-badge{width:26px;height:26px;border-radius:50%;background:var(--bg);border:.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--text-sub);flex-shrink:0}
+.panel-title{font-size:15px;font-weight:600;color:var(--text);letter-spacing:-.01em}
+.time-badge{margin-left:auto;font-size:11px;color:var(--text-hint);background:var(--bg);padding:3px 9px;border-radius:20px;border:.5px solid var(--border);white-space:nowrap}
+
+/* 필드 */
+.field{margin-bottom:1rem}
+.field:last-child{margin-bottom:0}
+.field-label{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--text-sub);margin-bottom:.4rem}
+.tag{font-size:10px;font-weight:600;padding:1px 7px;border-radius:3px;letter-spacing:.03em}
+.tag-q{background:var(--orange-bg);color:var(--orange);border:.5px solid var(--orange-border)}
+.tag-c{background:var(--green-bg);color:var(--green);border:.5px solid var(--green-border)}
+.tag-d{background:var(--red-bg);color:var(--red);border:.5px solid var(--red-border)}
+textarea{width:100%;font-size:13px;padding:9px 11px;border-radius:var(--radius);border:.5px solid var(--border);background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;line-height:1.6;resize:vertical;transition:border-color .15s}
+textarea:focus{outline:none;border-color:var(--border-hover);background:var(--surface)}
+textarea.sm{min-height:52px}
+textarea.md{min-height:80px}
+
+/* 위험신호 */
+.alert{background:var(--red-bg);border:.5px solid var(--red-border);border-radius:var(--radius);padding:9px 12px;margin-bottom:1rem;display:flex;align-items:flex-start;gap:8px}
+.alert-icon{font-size:14px;color:var(--red);flex-shrink:0;margin-top:1px}
+.alert-text{font-size:12px;color:var(--red);line-height:1.5}
+
+/* 체크리스트 */
+.divider{height:.5px;background:var(--border);margin:1rem 0}
+.check-list{display:flex;flex-direction:column;gap:5px}
+.check-item{display:flex;align-items:flex-start;gap:9px;padding:9px 11px;border-radius:var(--radius);border:.5px solid var(--border);cursor:pointer;background:var(--bg);transition:all .15s;user-select:none}
+.check-item:hover{border-color:var(--border-hover);background:var(--surface)}
+.check-item.on{background:var(--green-bg);border-color:var(--green-border)}
+.check-item input{margin-top:2px;flex-shrink:0;accent-color:var(--green);cursor:pointer}
+.check-item span{font-size:13px;color:var(--text);line-height:1.4}
+.check-item.on span{color:var(--green)}
+
+/* 변주 선택 */
+.choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:.75rem}
+.choice-item{display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:var(--radius);border:.5px solid var(--border);cursor:pointer;background:var(--bg);transition:all .15s;user-select:none}
+.choice-item:hover{border-color:var(--border-hover)}
+.choice-item.on{background:var(--blue-bg);border-color:var(--blue-border)}
+.choice-item input{flex-shrink:0;accent-color:var(--blue);cursor:pointer}
+.choice-item span{font-size:12px;color:var(--text)}
+.choice-item.on span{color:var(--blue)}
+
+/* 네비게이션 */
+.nav{display:flex;align-items:center;gap:8px;margin-top:1rem}
+.nav .sp{flex:1}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--radius);border:.5px solid var(--border);background:var(--surface);font-size:13px;font-weight:500;cursor:pointer;color:var(--text);font-family:'Noto Sans KR',sans-serif;transition:all .15s}
+.btn:hover{border-color:var(--border-hover);background:var(--bg)}
+.btn.primary{background:var(--text);border-color:var(--text);color:#fff}
+.btn.primary:hover{opacity:.85}
+.btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+
+/* 완료 화면 */
+.done-view{display:none;text-align:center;padding:2.5rem 1rem}
+.done-icon{font-size:36px;margin-bottom:1rem}
+.done-title{font-size:18px;font-weight:600;margin-bottom:.4rem}
+.done-sub{font-size:13px;color:var(--text-sub);margin-bottom:1.75rem;line-height:1.6}
+.copy-btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:var(--radius);border:.5px solid var(--border);background:var(--surface);font-size:14px;font-weight:500;cursor:pointer;color:var(--text);font-family:'Noto Sans KR',sans-serif;transition:all .15s;margin-bottom:1rem}
+.copy-btn:hover{background:var(--bg)}
+.copy-btn.copied{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.preview{text-align:left;background:var(--surface);border:.5px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-top:1.25rem;max-height:280px;overflow-y:auto}
+.preview-section{margin-bottom:1rem}
+.preview-section:last-child{margin-bottom:0}
+.preview-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-hint);margin-bottom:.4rem}
+.preview-line{font-size:13px;color:var(--text);line-height:1.6;margin-bottom:2px}
+.hint{font-size:11px;color:var(--text-hint);margin-top:.75rem;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="logo">웃소 제작팀</div>
+    <div class="main-title">문답식 기획 시뮬레이터</div>
+    <div class="main-sub">이 문답을 채우면 25분 영상 한 편이 설계됩니다</div>
+    <div class="progress-wrap">
+      <div class="progress-label"><span id="prog-text">0 / 6 구간 완료</span><span id="prog-pct">0%</span></div>
+      <div class="progress-bar"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <div class="meta-card">
+    <div class="meta-field">
+      <label>작성자</label>
+      <input type="text" id="author" placeholder="이름 (예: 민보)" />
+    </div>
+    <div class="meta-field">
+      <label>작성일</label>
+      <input type="text" id="date" />
+    </div>
+    <div class="meta-field full">
+      <label>영상 제목 / 기획명</label>
+      <input type="text" id="vtitle" placeholder="예: 웃소 멤버들 처음 보는 음식 먹기" />
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-i="0">0. 기반</div>
+    <div class="tab" data-i="1">1. 인트로</div>
+    <div class="tab" data-i="2">2. 도입</div>
+    <div class="tab" data-i="3">3. 전개</div>
+    <div class="tab" data-i="4">4. 절정</div>
+    <div class="tab" data-i="5">5. 마무리</div>
+  </div>
+
+  <!-- 0. 기반 -->
+  <div id="p0" class="panel active">
+    <div class="panel-card">
+      <div class="panel-head">
+        <div class="phase-badge">0</div>
+        <div class="panel-title">기반 설계 — 영상의 핵심</div>
+      </div>
+      <div class="field">
+        <div class="field-label"><span class="tag tag-q">문답</span> 이 소재를 왜 하고 싶은가? (한 문장)</div>
+        <textarea class="sm" id="f0_why" placeholder="예: 멤버들 음식 취향이 너무 달라서 강제로 같은 걸 먹는 상황을 만들어보고 싶었다"></textarea>
+      </div>
+      <div class="field">
+        <div class="field-label"><span class="tag tag-q">문답</span> 포맷의 핵심 규칙은? (시청자가 1분 안에 이해해야 함)</div>
+        <textarea class="sm" id="f0_rule" placeholder="예: 랜덤으로 뽑힌 도시락 메뉴를 모두 함께 먹어야 하고, 남기면 페널티"></textarea>
+      </div>
+      <div class="field">
+        <div class="field-label"><span class="tag tag-q">문답</span> 이 영상의 가장 큰 반전 / 절정 지점은?</div>
+        <textarea class="sm" id="f0_climax" placeholder="없으면 구조 재검토 필요. 예: 가장 까다로운 멤버가 의외로 다 먹어치우는 반전"></textarea>
+      </div>
+      <div class="field">
+        <div class="field-label"><span class="tag tag-q">문답</span> 촬영 끝에 출연자들이 어떤 감정을 느끼길 바라나?</div>
+        <textarea class="sm" id="f0_meaning" placeholder="예: 취향이 달라도 같이 뭔가를 해낼 수 있다는 유대감"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. 인트로 -->
+  <div id="p1" class="panel">
+    <div class="panel-card">
+      <div class="panel-head">
+        <div class="phase-badge">1</div>
+        <div class="panel-title">인트로 — 왜 계속 봐야 하나</div>
+        <div class="time-badge">0~2분</div>
+      </div>
+      <div class="field">
+        <div class="field-label"><span class="tag tag-q">문답</span> 시청자가 계속 볼 이유(훅)는?</div>
+        <textarea class="sm" id="f1_hook" placeholder="예: 제일 까다로운 멤버 반응 먼저 보여주고 '이게 어떻게 된 건지'로 시작"></textarea>
+      </div>
+      <div class="divider"></div>
+      <div class="field-label" style="margin-bottom:.5rem"><span class="tag tag-c">체크</span> 인트로 체크리스트</div>
+      <div class="check-list">
+        <label class="check-item"><input type="checkbox" onchange="onCheck(this)"><span>시청자가 2분 안에 "이 영상이 뭔지" 이해하는가</span></label>
+        <label class="check-item"><input type="checkbox" onchange="onCheck(this)"><span>기대감을 만드는 장치가 하나 이상 있는가</span></label>
+        <label class="check-item"><input type="checkbox" onchange="onCheck(this)"><span>첫 장면이 구체적으로 설계되어 있는가</span></label>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. 도입 -->
+  <div id="p2" class="panel">
+    <div class="panel-card">
+      <div class="panel-head">
+        <div class="phase-badge">2</div>
+        <div class="panel-title">도입 — 규칙 안착 + 첫 재미</div>
+        <div class="time-badge">2~7분</div>
+      </div>
+      <div class="alert">
+        <div class="alert-icon">⚠</div>
+        <div class="alert-text">규칙 설명이 5분 넘어가면 이탈 위험 — 설명보다 먼저 보여줄 것</div>
+      </div>
+      <div class="field">
+        <div class="field-label"><span class="tag tag-q">문답</span> 규칙 설명이 끝나는 지점은? (목표: 4분 이내)</div>
+        <textarea class="sm" id="f2_end" placeholder="예: 오프닝 리액션 → 규칙 설명 → 2분 30초에 첫 라운드 시작"></textarea>
+      </div>
+      <div class="field">
+        <div class="field-label"><span class="tag tag-q">문답</span> 이 구간의 첫 번째 웃음 / 재미 포인트는?</div>
+        <textarea class="sm" id="f2_fun" placeholder="예: 메뉴 공개 순간 멤버 반응 — 특히 태훈이 표정"></textarea>
+      </div>
+      <div class="field">
+        <div class="field-label"><span class="tag tag-q">문답</span> 멤버들 첫 반응 시뮬레이션</div>
+        <textarea class="md" id="f2_sim" placeholder="예상대로 갔을 때: 다들 황당해하며 웃음&#10;예상 밖으로 갔을 때: 누군가 진심으로 싫어하면 → 그것도 콘텐츠"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 전개 -->
+  <div id="p3" class="panel">
+    <div class="panel-card">
+      <div class="panel-head">
+        <div class="phase-badge">3</div>
+        <div class="panel-title">전개 — 긴장 유지 + 변주</div>
+        <div class="time-badge">7~16분</div>
+      </div>
+      <div class="alert">
+        <div class="alert-icon">⚠</div>
+        <div class="alert-text">같은 패턴 3회 이상 반복되면 지루함 — 변주 없이 9분 못 감</div>
+      </div>
+      <div class="field">
+        <div class="field-label"><span class="tag tag-q">문답</span> 분량이 죽을 것 같은 구간은? 거기에 넣을 장치는?</div>
+        <textarea class="md" id="f3_dead" placeholder="예: 10~12분쯤 음식 먹는 장면이 단조로워질 수 있음&#10;→ 장치: 중간에 추가 페널티 룰 공개 or 멤버끼리 교환 딜"></textarea>
+      </div>
+      <div class="field">
+        <div class="field-label"><span class="tag tag-q">문답</span> 이 구간의 변주 장치는? (해당하는 것 선택)</div>
+        <div class="choice-grid">
+          <label class="choice-item"><input type="checkbox" onchange="onCheck(this)"><span>규칙 변경 / 미니 게임</span></label>
+          <label class="choice-item"><input type="checkbox" onchange="onCheck(this)"><span>페널티 / 보상 장치</span></label>
+          <label class="choice-item"><input type="checkbox" onchange="onCheck(this)"><span>서프라이즈 / 외부 변수</span></label>
+          <label class="choice-item"><input type="checkbox" onchange="onCheck(this)"><span>멤버 간 갈등·대결·연대</span></label>
+        </div>
+        <textarea class="sm" id="f3_var" placeholder="선택한 변주 장치를 구체적으로 설명하세요"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. 절정 -->
+  <div id="p4" class="panel">
+    <div class="panel-card">
+      <div class="panel-head">
+        <div class="phase-badge">4</div>
+        <div class="panel-title">절정 — 가장 큰 장면</div>
+        <div class="time-badge">16~22분</div>
+      </div>
+      <div class="alert">
+        <div class="alert-icon">⚠</div>
+        <div class="alert-text">절정 장면이 16분 이후에 없으면 영상이 끝나기 전에 힘이 빠짐</div>
+      </div>
+      <div class="alert">
+        <div class="alert-icon">⚠</div>
+        <div class="alert-text">반전 포인트 없는 결말은 "그래서?" 반응만 남음</div>
+      </div>
+      <div class="field">
+        <div class="field-label"><span class="tag tag-q">문답</span> 가장 큰 장면은 무엇이고, 언제 터지나?</div>
+        <textarea class="md" id="f4_big" placeholder="예: 가장 까다로운 멤버가 결국 다 먹는 장면 — 18~19분에 배치&#10;그 전에 못 먹을 것 같다는 복선을 3번 심어둠"></textarea>
+      </div>
+      <div class="field">
+        <div class="field-label"><span class="tag tag-q">문답</span> 감정 최고점 이후 해소 장치는?</div>
+        <textarea class="sm" id="f4_rel" placeholder="예: 다 같이 박수 + 멤버 솔직 반응 인터뷰 컷"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. 마무리 -->
+  <div id="p5" class="panel">
+    <div class="panel-card">
+      <div class="panel-head">
+        <div class="phase-badge">5</div>
+        <div class="panel-title">마무리 — 무엇이 남는가</div>
+        <div class="time-badge">22~25분</div>
+      </div>
+      <div class="field">
+        <div class="field-label"><span class="tag tag-q">문답</span> 엔딩에서 무엇이 남아야 하는가?</div>
+        <textarea class="sm" id="f5_end" placeholder="예: 취향이 달라도 같이 해낼 수 있다는 것 — 멤버들 표정과 한 마디로 마무리"></textarea>
+      </div>
+      <div class="divider"></div>
+      <div class="field-label" style="margin-bottom:.5rem"><span class="tag tag-c">체크</span> 마무리 체크리스트</div>
+      <div class="check-list" style="margin-bottom:1rem">
+        <label class="check-item"><input type="checkbox" onchange="onCheck(this)"><span>감정이 해소되고 깔끔하게 마무리되는가</span></label>
+        <label class="check-item"><input type="checkbox" onchange="onCheck(this)"><span>출연자들의 반응 / 소감이 담기는가</span></label>
+        <label class="check-item"><input type="checkbox" onchange="onCheck(this)"><span>다음 영상이 보고 싶어지는 여운이 있는가</span></label>
+      </div>
+      <div class="divider"></div>
+      <div class="field-label" style="margin-bottom:.5rem"><span class="tag tag-d">위험신호</span> 전체 구조 최종 점검</div>
+      <div class="check-list">
+        <label class="check-item"><input type="checkbox" onchange="onCheck(this)"><span>영상을 한 문장으로 요약할 수 있는가</span></label>
+        <label class="check-item"><input type="checkbox" onchange="onCheck(this)"><span>분량이 죽는 구간에 장치가 심어져 있는가</span></label>
+        <label class="check-item"><input type="checkbox" onchange="onCheck(this)"><span>절정 장면이 16분 이후에 배치되어 있는가</span></label>
+        <label class="check-item"><input type="checkbox" onchange="onCheck(this)"><span>의미(출연자가 느낄 감정)가 설계되어 있는가</span></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav" id="nav">
+    <button class="btn" id="btn-prev" onclick="go(-1)" style="display:none">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> 이전
+    </button>
+    <div class="sp"></div>
+    <button class="btn primary" id="btn-next" onclick="go(1)">
+      다음 <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+    <button class="btn primary" id="btn-done" onclick="finish()" style="display:none">
+      기획 완성하기 <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+    </button>
+  </div>
+
+  <div class="done-view" id="done-view">
+    <div class="done-icon">✓</div>
+    <div class="done-title">기획서가 완성됐어요</div>
+    <div class="done-sub" id="done-sub"></div>
+    <button class="copy-btn" id="copy-btn" onclick="copyText()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+      내용 복사하기
+    </button>
+    <div class="hint">복사 후 Claude 또는 슬랙에 붙여넣으면 캔버스로 변환할 수 있어요</div>
+    <div class="preview" id="preview"></div>
+  </div>
+
+</div>
+<script>
+let cur=0;
+const total=6;
+const fields=[['f0_why','f0_rule','f0_climax','f0_meaning'],['f1_hook'],['f2_end','f2_fun'],['f3_dead'],['f4_big'],['f5_end']];
+
+// 날짜 자동입력
+document.getElementById('date').value=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit'});
+
+function onCheck(cb){cb.closest('label').classList.toggle('on',cb.checked);updateProg()}
+
+function hasContent(i){return fields[i].some(id=>{const e=document.getElementById(id);return e&&e.value.trim().length>2})}
+
+function updateProg(){
+  let n=0;for(let i=0;i<total;i++)if(hasContent(i))n++;
+  const pct=Math.round(n/total*100);
+  document.getElementById('prog').style.width=pct+'%';
+  document.getElementById('prog-text').textContent=n+' / '+total+' 구간 완료';
+  document.getElementById('prog-pct').textContent=pct+'%';
+  document.querySelectorAll('.tab').forEach((t,i)=>{if(i<cur)t.classList.toggle('done',hasContent(i))});
+}
+
+function go(d){
+  document.getElementById('p'+cur).classList.remove('active');
+  document.querySelectorAll('.tab')[cur].classList.remove('active');
+  cur=Math.max(0,Math.min(total-1,cur+d));
+  document.getElementById('p'+cur).classList.add('active');
+  document.querySelectorAll('.tab')[cur].classList.add('active');
+  document.getElementById('btn-prev').style.display=cur===0?'none':'inline-flex';
+  document.getElementById('btn-next').style.display=cur===total-1?'none':'inline-flex';
+  document.getElementById('btn-done').style.display=cur===total-1?'inline-flex':'none';
+  updateProg();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+document.querySelectorAll('.tab').forEach((t,i)=>{
+  t.addEventListener('click',()=>{
+    document.getElementById('p'+cur).classList.remove('active');
+    document.querySelectorAll('.tab')[cur].classList.remove('active');
+    cur=i;
+    document.getElementById('p'+cur).classList.add('active');
+    document.querySelectorAll('.tab')[cur].classList.add('active');
+    document.getElementById('btn-prev').style.display=cur===0?'none':'inline-flex';
+    document.getElementById('btn-next').style.display=cur===total-1?'none':'inline-flex';
+    document.getElementById('btn-done').style.display=cur===total-1?'inline-flex':'none';
+    updateProg();
+  });
+});
+
+document.querySelectorAll('textarea,input[type=text]').forEach(e=>e.addEventListener('input',updateProg));
+
+function gv(id){const e=document.getElementById(id);return e?e.value.trim():''}
+
+function buildText(){
+  const author=gv('author')||'미입력';
+  const date=gv('date');
+  const title=gv('vtitle')||'제목 없음';
+  return `[문답식 기획 시뮬레이터] 웃소 제작팀
+작성자: ${author} | 작성일: ${date}
+영상 제목: ${title}
+
+─── 기반 설계 ───
+왜 하고 싶은가: ${gv('f0_why')||'미입력'}
+포맷 핵심 규칙: ${gv('f0_rule')||'미입력'}
+최대 반전/절정: ${gv('f0_climax')||'미입력'}
+촬영 후 감정 의미: ${gv('f0_meaning')||'미입력'}
+
+─── 인트로 (0~2분) ───
+훅: ${gv('f1_hook')||'미입력'}
+
+─── 도입 (2~7분) ───
+규칙 설명 끝나는 지점: ${gv('f2_end')||'미입력'}
+첫 재미 포인트: ${gv('f2_fun')||'미입력'}
+멤버 반응 시뮬레이션: ${gv('f2_sim')||'미입력'}
+
+─── 전개 (7~16분) ───
+위험 구간 & 장치: ${gv('f3_dead')||'미입력'}
+변주 장치: ${gv('f3_var')||'미입력'}
+
+─── 절정 (16~22분) ───
+가장 큰 장면: ${gv('f4_big')||'미입력'}
+감정 해소 장치: ${gv('f4_rel')||'미입력'}
+
+─── 마무리 (22~25분) ───
+엔딩에서 남는 것: ${gv('f5_end')||'미입력'}`;
+}
+
+function finish(){
+  const author=gv('author')||'미입력';
+  const title=gv('vtitle')||'제목 없음';
+  const date=gv('date');
+  document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
+  document.getElementById('nav').style.display='none';
+  document.getElementById('done-view').style.display='block';
+  document.getElementById('done-sub').textContent=`"${title}" — ${author} · ${date}`;
+  const txt=buildText();
+  const pv=document.getElementById('preview');
+  pv.innerHTML=txt.split('\n').map(l=>l.startsWith('───')?`<div class="preview-label">${l.replace(/─/g,'').trim()}</div>`:`<div class="preview-line">${l||'&nbsp;'}</div>`).join('');
+  document.getElementById('copy-btn')._text=txt;
+}
+
+function copyText(){
+  const txt=document.getElementById('copy-btn')._text;
+  navigator.clipboard.writeText(txt).then(()=>{
+    const btn=document.getElementById('copy-btn');
+    btn.classList.add('copied');
+    btn.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> 복사됐어요';
+    setTimeout(()=>{btn.classList.remove('copied');btn.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> 내용 복사하기';},2500);
+  });
+}
+</script>
+</body>
+</html>
